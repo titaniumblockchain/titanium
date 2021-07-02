@@ -1,0 +1,92 @@
+#!/sbin/openrc-run
+
+# backward compatibility for existing gentoo layout 
+#
+if [ -d "/var/lib/etitanium/.etitanium" ]; then
+	ETITANIUMD_DEFAULT_DATADIR="/var/lib/etitanium/.etitanium"
+else
+	ETITANIUMD_DEFAULT_DATADIR="/var/lib/etitaniumd"
+fi
+
+ETITANIUMD_CONFIGFILE=${ETITANIUMD_CONFIGFILE:-/etc/etitanium/etitanium.conf}
+ETITANIUMD_PIDDIR=${ETITANIUMD_PIDDIR:-/var/run/etitaniumd}
+ETITANIUMD_PIDFILE=${ETITANIUMD_PIDFILE:-${ETITANIUMD_PIDDIR}/etitaniumd.pid}
+ETITANIUMD_DATADIR=${ETITANIUMD_DATADIR:-${ETITANIUMD_DEFAULT_DATADIR}}
+ETITANIUMD_USER=${ETITANIUMD_USER:-${ETITANIUM_USER:-etitanium}}
+ETITANIUMD_GROUP=${ETITANIUMD_GROUP:-etitanium}
+ETITANIUMD_BIN=${ETITANIUMD_BIN:-/usr/bin/etitaniumd}
+ETITANIUMD_NICE=${ETITANIUMD_NICE:-${NICELEVEL:-0}}
+ETITANIUMD_OPTS="${ETITANIUMD_OPTS:-${ETITANIUM_OPTS}}"
+
+name="eTitanium Core Daemon"
+description="eTitanium cryptocurrency P2P network daemon"
+
+command="/usr/bin/etitaniumd"
+command_args="-pid=\"${ETITANIUMD_PIDFILE}\" \
+		-conf=\"${ETITANIUMD_CONFIGFILE}\" \
+		-datadir=\"${ETITANIUMD_DATADIR}\" \
+		-daemon \
+		${ETITANIUMD_OPTS}"
+
+required_files="${ETITANIUMD_CONFIGFILE}"
+start_stop_daemon_args="-u ${ETITANIUMD_USER} \
+			-N ${ETITANIUMD_NICE} -w 2000"
+pidfile="${ETITANIUMD_PIDFILE}"
+
+# The retry schedule to use when stopping the daemon. Could be either
+# a timeout in seconds or multiple signal/timeout pairs (like
+# "SIGKILL/180 SIGTERM/300")
+retry="${ETITANIUMD_SIGTERM_TIMEOUT}"
+
+depend() {
+	need localmount net
+}
+
+# verify
+# 1) that the datadir exists and is writable (or create it)
+# 2) that a directory for the pid exists and is writable
+# 3) ownership and permissions on the config file
+start_pre() {
+	checkpath \
+	-d \
+	--mode 0750 \
+	--owner "${ETITANIUMD_USER}:${ETITANIUMD_GROUP}" \
+	"${ETITANIUMD_DATADIR}"
+
+	checkpath \
+	-d \
+	--mode 0755 \
+	--owner "${ETITANIUMD_USER}:${ETITANIUMD_GROUP}" \
+	"${ETITANIUMD_PIDDIR}"
+
+	checkpath -f \
+	-o ${ETITANIUMD_USER}:${ETITANIUMD_GROUP} \
+	-m 0660 \
+	${ETITANIUMD_CONFIGFILE}
+
+	checkconfig || return 1
+}
+
+checkconfig()
+{
+	if ! grep -qs '^rpcpassword=' "${ETITANIUMD_CONFIGFILE}" ; then
+		eerror ""
+		eerror "ERROR: You must set a secure rpcpassword to run etitaniumd."
+		eerror "The setting must appear in ${ETITANIUMD_CONFIGFILE}"
+		eerror ""
+		eerror "This password is security critical to securing wallets "
+		eerror "and must not be the same as the rpcuser setting."
+		eerror "You can generate a suitable random password using the following "
+		eerror "command from the shell:"
+		eerror ""
+		eerror "bash -c 'tr -dc a-zA-Z0-9 < /dev/urandom | head -c32 && echo'"
+		eerror ""
+		eerror "It is recommended that you also set alertnotify so you are "
+		eerror "notified of problems:"
+		eerror ""
+		eerror "ie: alertnotify=echo %%s | mail -s \"eTitanium Alert\"" \
+			"admin@foo.com"
+		eerror ""
+		return 1
+	fi
+}

@@ -1,0 +1,33 @@
+# /etc/conf.d/etitaniumd: config file for /etc/init.d/etitaniumd
+
+# Config file location
+#ETITANIUMD_CONFIGFILE="/etc/etitanium/etitanium.conf"
+
+# What directory to write pidfile to?  (created and owned by $ETITANIUMD_USER)
+#ETITANIUMD_PIDDIR="/var/run/etitaniumd"
+
+# What filename to give the pidfile
+#ETITANIUMD_PIDFILE="${ETITANIUMD_PIDDIR}/etitaniumd.pid"
+
+# Where to write etitaniumd data (be mindful that the blockchain is large)
+#ETITANIUMD_DATADIR="/var/lib/etitaniumd"
+
+# User and group to own etitaniumd process
+#ETITANIUMD_USER="etitanium"
+#ETITANIUMD_GROUP="etitanium"
+
+# Path to etitaniumd executable
+#ETITANIUMD_BIN="/usr/bin/etitaniumd"
+
+# Nice value to run etitaniumd under
+#ETITANIUMD_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#ETITANIUMD_OPTS=""
+
+# The timeout in seconds OpenRC will wait for etitaniumd to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+ETITANIUMD_SIGTERM_TIMEOUT=600

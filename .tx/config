@@ -1,0 +1,7 @@
+[main]
+host = https://www.transifex.com
+
+[etitanium.qt-translation-021x]
+file_filter = src/qt/locale/etitanium_<lang>.ts
+source_file = src/qt/locale/etitanium_en.ts
+source_lang = en
